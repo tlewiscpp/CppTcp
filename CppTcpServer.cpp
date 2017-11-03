@@ -3,18 +3,15 @@
 #include <future>
 #include <sstream>
 #include <csignal>
-#include <mutex>
-#include <string>
-#include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <forward_list>
 #include <cerrno>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <fstream>
-#include <forward_list>
-
 
 #include <unistd.h>
 
@@ -22,28 +19,32 @@
 #include "GlobalDefinitions.h"
 
 #include <getopt.h>
+#include <arpa/inet.h>
 
 using namespace ApplicationUtilities;
 
 static int verboseLogging{false};
 void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::string &str);
+std::map<int, std::future<void>> connections;
+void closeConnection(int socketDescriptor);
 
 static struct option long_options[]
 {
         /* These options set a flag. */
-        {"verbose",  no_argument,   &verboseLogging, 1},
+        {"verbose",  no_argument,       &verboseLogging, 1},
         /* These options don’t set a flag, we distinguish them by their indices. */
-        {"help",     no_argument,   nullptr, 'h'},
-        {"version",  no_argument,   nullptr, 'v'},
+        {"help",     no_argument,       nullptr, 'h'},
+        {"version",  no_argument,       nullptr, 'v'},
+        {"port",     required_argument, nullptr, 'p'},
         {nullptr, 0, nullptr, 0}
 };
 
 
 static const int RECEIVE_TIMEOUT{1500};
 static const int MAX_INCOMING_CONNECTIONS{10};
-static const uint16_t constexpr MINIMUM_PORT_NUMBER{1024};
-static const uint16_t DEFAULT_PORT_NUMBER{5678};
-static uint16_t portNumber{5678};
+static const int constexpr MINIMUM_PORT_NUMBER{1024};
+static const int DEFAULT_PORT_NUMBER{5678};
+static int portNumber{-1};
 static const char LINE_ENDING{'\n'}; 
 static const int constexpr BUFFER_MAX{1024};
 static char port[BUFFER_MAX];
@@ -52,12 +53,13 @@ static std::mutex coutMutex{};
 
 void exitApplication(int exitCode);
 void signalHandler(int signal);
-void installSignalHandlers(void (*signalHandler)(int));
+
+void displayVersion();
+void displayHelp();
 
 inline std::string stripLineEnding(std::string str) { if ((str.length() > 0) && (str.back() == LINE_ENDING)) str.pop_back(); return str; }
 template <typename T> std::string toStdString(T t) { return dynamic_cast<std::ostringstream &>(std::ostringstream{} << t).str(); }
-template <char Delimiter = ' '> std::vector<std::string> split(const std::string &str)
-{
+template <char Delimiter = ' '> std::vector<std::string> split(const std::string &str) {
     std::istringstream istr{str};
     std::vector<std::string> returnVector{};
     for (std::string temp{}; std::getline(istr, temp); returnVector.push_back(temp));
@@ -69,22 +71,22 @@ struct timeval toTimeVal(uint32_t totalTimeout);
 std::string sockaddrToString(sockaddr *address, socklen_t addressLength);
 void printToStdout(const std::string &msg);
 void printAddressMessageToStdout(const std::string &msg, sockaddr *address);
-void handleConnection(int socketDescriptor, sockaddr *address);
+void handleConnection(int socketDescriptor, sockaddr acceptedAddress);
 
 static addrinfo *addressInfo{nullptr};
 
 int main(int argc, char *argv[])
 {
-    /* getopt_long stores the option index here. */
-    StaticLogger::initializeInstance();
-    (void)staticLogger->installLogHandler(globalLogHandler);
+    //[[maybe_unused]]
+    StaticLogger::initializeInstance(globalLogHandler);
 
-    /* Detect the end of the options. */
+    /* getopt_long stores the option index here. */
     int optionIndex{0};
     opterr = 0;
 
     while (true) {
-        auto currentOption = getopt_long(argc, argv, "hv", long_options, &optionIndex);
+        auto currentOption = getopt_long(argc, argv, "hvp:", long_options, &optionIndex);
+        /* Detect the end of the options. */
         if (currentOption == -1) {
             break;
         }
@@ -106,18 +108,31 @@ int main(int argc, char *argv[])
             case 'v':
                 displayVersion();
                 exit(EXIT_SUCCESS);
+            case 'p':
+                portNumber = std::stoi(optarg);
+                break;
             default:
                 LOG_WARN("") << TStringFormat(R"(Unknown option "{0}", skipping)", long_options[optionIndex].name);
         }
     }
     displayVersion();
-    LOG_INFO("") << TStringFormat("Using LogFile {0}", ApplicationUtilities::getLogFilePath());
+    LOG_INFO("") << TStringFormat("Using log file {0}", ApplicationUtilities::getLogFilePath());
 
-    if (argc > 1) {
-        portNumber = std::stoi(argv[1]);
-    } else {
-        portNumber = DEFAULT_PORT_NUMBER;
+
+    if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
+        LOG_FATAL("") << TStringFormat("Port number may not be less than {0} ({1} < 0)", MINIMUM_PORT_NUMBER, portNumber);
     }
+    if (portNumber == -1) {
+        for (int i = 1; i < argc; i++) {
+            if ( (strlen(argv[i]) > 0) && (argv[i][0] != '-') ) {
+                portNumber = static_cast<int>(std::stoi(argv[i]));
+            }
+        }
+        if (portNumber == -1) {
+            portNumber = DEFAULT_PORT_NUMBER;
+        }
+    }
+    LOG_INFO("") << TStringFormat("Using port number {0}", portNumber);
     memset(port, '\0', BUFFER_MAX);
     strcpy(port, std::to_string(portNumber).c_str());
     addrinfo hints{};
@@ -207,17 +222,18 @@ int main(int argc, char *argv[])
         std::cout << "listen(int, int): error code " << errno << " (" << strerror(errno) << ")" << std::endl;
         exitApplication(EXIT_FAILURE);
     }
-    
 
+    sockaddr acceptedAddress{};
+    socklen_t acceptedAddressSize{0};
     while (true) {
-        struct sockaddr_storage acceptedAddress;
-        socklen_t acceptedAddressSize{0};
-        auto acceptResult = accept(socketDescriptor, reinterpret_cast<struct sockaddr *>(&acceptedAddress), &acceptedAddressSize);
+        acceptedAddress = {};
+        acceptedAddressSize = sizeof(acceptedAddress);
+        auto acceptResult = accept(socketDescriptor, &acceptedAddress, &acceptedAddressSize);
         if (acceptResult == -1) {
-            printToStdout("accept(int, sockaddr *, size_t *): error code " + errno << " (" << strerror(errno) << ")");
+            printToStdout(TStringFormat("accept(int, sockaddr *, size_t *): error code {0} ({1})", errno, strerror(errno)));
             exitApplication(EXIT_FAILURE);
         }
-        std::async(std::launch::async, handleConnection, acceptResult, acceptedAddress);
+        connections.emplace(socketDescriptor, std::async(std::launch::async, handleConnection, acceptResult, acceptedAddress));
 
     }
     freeaddrinfo(addressInfo); //Free memory allocated by getaddrinfo
@@ -225,14 +241,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void handleConnection(int socketDescriptor, sockaddr_storage *addressStorage)
+void handleConnection(int socketDescriptor, sockaddr addressStorage)
 {
-    printToStdout("Incoming connection", socketDescriptor);
+    printAddressMessageToStdout("Incoming connection", &addressStorage);
     //Set timeout
     auto tv = toTimeVal(RECEIVE_TIMEOUT);
     auto readTimeoutResult = setsockopt(socketDescriptor, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&tv), sizeof(struct timeval));
     if (readTimeoutResult == -1) {
-        std::cout << "setsockopt(int, int, int, const void *, int): error code " << errno << " (" << strerror(errno) << ")" << std::endl;
+        printToStdout(TStringFormat("setsockopt(int, int, int, const void *, int): error code {0} ({1})", errno, strerror(errno)));
         exitApplication(EXIT_FAILURE);
     }
     
@@ -242,34 +258,43 @@ void handleConnection(int socketDescriptor, sockaddr_storage *addressStorage)
         auto receiveResult = recv(socketDescriptor, buffer, BUFFER_MAX - 1, 0); //no flags
         if (receiveResult == -1) {
             if (errno != EAGAIN) {
-                std::cout << "recv(int, void *, size_t, int): error code " << errno << " (" << strerror(errno) << ")" << std::endl;
+                printToStdout(TStringFormat("recv(int, void *, size_t, int): error code {0} ({1})", errno, strerror(errno)));
                 exitApplication(EXIT_FAILURE);
             }
         } else if (strlen(buffer) != 0) {
             std::string receivedString{"Message received: \"" + stripLineEnding(buffer) + "\""};
-            printToStdout(receivedString, socketDescriptor);
+            printAddressMessageToStdout(receivedString, &addressStorage);
             receivedString += LINE_ENDING;
             unsigned sentBytes{0};
             //Make sure all bytes are sent
             while (sentBytes < receivedString.length()) {
                 auto sendResult = send(socketDescriptor, receivedString.c_str(), receivedString.length(), 0);
                 if (sendResult == -1) {
-                    std::cout << "send(int, const void *, int, int): error code " << errno << " (" << strerror(errno) << ")" << std::endl;
+                    printToStdout(TStringFormat("send(int, const void *, int, int): error code {0} ({1})", errno, strerror(errno)));
                     exitApplication(EXIT_FAILURE);
                 }
                 sentBytes += sendResult;
             }
         } else if (receiveResult == 0) {
-            printToStdout("Connection closed", socketDescriptor);
-            close(socketDescriptor);
+            printAddressMessageToStdout("Connection closed", &addressStorage);
+            closeConnection(socketDescriptor);
             return;
         }
     }
 }
 
+void closeConnection(int socketDescriptor)
+{
+    auto foundPosition = connections.find(socketDescriptor);
+    if (foundPosition != connections.end()) {
+        close(foundPosition->first);
+        connections.erase(foundPosition);
+    }
+}
+
 struct timeval toTimeVal(uint32_t totalTimeout)
 {
-    struct timeval tv; 
+    timeval tv{};
     tv.tv_sec = totalTimeout / 1000;
     tv.tv_usec = (totalTimeout % 1000) * 1000;
     return tv;
@@ -283,14 +308,15 @@ std::string sockaddrToString(sockaddr *address)
     char port[NI_MAXSERV];
     memset(host, '\0', NI_MAXHOST);
     memset(port, '\0', NI_MAXSERV);
-    getnameinfo(address, addressLength, host, sizeof(host), port, sizeof(port), NI_NUMERICHOST);
+
+    getnameinfo(address, sizeof(*address), host, sizeof(host), port, sizeof(port), NI_NUMERICHOST);
     returnString << '[' << host << ':' << port << ']';
     return returnString.str();
 }
 
 void printAddressMessageToStdout(const std::string &msg, sockaddr *address)
 {
-    printToStdout(msg + " - " + sockaddrToString(address))
+    printToStdout(msg + " - " + sockaddrToString(address));
 }
 
 void printToStdout(const std::string &msg)
@@ -314,32 +340,8 @@ void signalHandler(int signal)
     if ( (signal == SIGUSR1) || (signal == SIGUSR2) ) {
         return;
     }
-    std::cout << "Signal received: " << signal << " (" << strsignal(signal) << ")" << std::endl;
+    LOG_INFO("") << TStringFormat("Signal received: {0} ({1})", signal, strsignal(signal));
     exitApplication(EXIT_FAILURE);
-}
-
-void installSignalHandlers(void (*signalHandler)(int))
-{
-    static struct sigaction signalInterruptHandler;
-    signalInterruptHandler.sa_handler = signalHandler;
-    sigemptyset(&signalInterruptHandler.sa_mask);
-    signalInterruptHandler.sa_flags = 0;
-    sigaction(SIGHUP, &signalInterruptHandler, NULL);
-    sigaction(SIGINT, &signalInterruptHandler, NULL);
-    sigaction(SIGQUIT, &signalInterruptHandler, NULL);
-    sigaction(SIGILL, &signalInterruptHandler, NULL);
-    sigaction(SIGABRT, &signalInterruptHandler, NULL);
-    sigaction(SIGFPE, &signalInterruptHandler, NULL);
-    sigaction(SIGPIPE, &signalInterruptHandler, NULL);
-    sigaction(SIGALRM, &signalInterruptHandler, NULL);
-    sigaction(SIGTERM, &signalInterruptHandler, NULL);
-    sigaction(SIGUSR1, &signalInterruptHandler, NULL);
-    sigaction(SIGUSR2, &signalInterruptHandler, NULL);
-    sigaction(SIGCHLD, &signalInterruptHandler, NULL);
-    sigaction(SIGCONT, &signalInterruptHandler, NULL);
-    sigaction(SIGTSTP, &signalInterruptHandler, NULL);
-    sigaction(SIGTTIN, &signalInterruptHandler, NULL);
-    sigaction(SIGTTOU, &signalInterruptHandler, NULL);
 }
 
 
@@ -392,11 +394,15 @@ void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::strin
                 return;
             }
             logPrefix = "{  Debug }: ";
-            outputStream = &std::cout;
+            outputStream = &std::clog;
             break;
         case LogLevel::Info:
             logPrefix = "{  Info  }: ";
-            outputStream = &std::clog;
+            outputStream = &std::cout;
+            break;
+        case LogLevel::Warn:
+            logPrefix = "{  Warn  }: ";
+            outputStream = &std::cout;
             break;
         case LogLevel::Fatal:
             logPrefix = "{  Fatal }: ";
@@ -410,12 +416,13 @@ void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::strin
     if (coreLogMessage.find_last_of('\"') == coreLogMessage.length() - 1) {
         coreLogMessage = coreLogMessage.substr(0, coreLogMessage.length() - 1);
     }
+    std::string logTime{currentTime()};
+    std::replace(logTime.begin(), logTime.end(), '-', ':');
+    //logTime.replace(logTime.begin(), logTime.end(), '-', ':');
     if (logLevel == LogLevel::Fatal) {
-        std::string logTime{currentTime()};
-        logTime.replace(logTime.begin(), logTime.end(), '-', ':');
-        logMessage = TStringFormat("[{0}] - {1} {2} ({3}:{4}, {5})", currentTime(), logPrefix, coreLogMessage, logContext.fileName, logContext.sourceFileLine, logContext.functionName);
+        logMessage = TStringFormat("[{0}] - {1} {2} ({3}:{4}, {5})", logTime, logPrefix, coreLogMessage, logContext.fileName, logContext.sourceFileLine, logContext.functionName);
     } else {
-        logMessage = TStringFormat("[{0}] - {1} {2}", currentTime(), logPrefix, coreLogMessage);
+        logMessage = TStringFormat("[{0}] - {1} {2}", logTime, logPrefix, coreLogMessage);
     }
 
 

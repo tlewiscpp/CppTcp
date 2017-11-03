@@ -7,18 +7,43 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(SERVER_PROJECT ${PROJECT_NAME}_SERVER)
+set(CLIENT_PROJECT ${PROJECT_NAME}_CLIENT)
+
 set (SOURCE_ROOT .)
 
-set(${PROJECT_NAME}_SOURCE_FILES
-        ${SOURCE_ROOT}/TcpServer.cpp
+set(${SERVER_PROJECT}_SOURCE_FILES
+        ${SOURCE_ROOT}/CppTcpServer.cpp
         ${SOURCE_ROOT}/ApplicationUtilities.cpp
         ${SOURCE_ROOT}/StaticLogger.cpp)
 
-set (${PROJECT_NAME}_HEADER_FILES
+set (${SERVER_PROJECT}_HEADER_FILES
         ${SOURCE_ROOT}/ApplicationUtilities.h
         ${SOURCE_ROOT}/StaticLogger.h
         ${SOURCE_ROOT}/GlobalDefinitions.h)
 
-add_executable(${PROJECT_NAME}
-        ${${PROJECT_NAME}_SOURCE_FILES}
-        ${${PROJECT_NAME}_HEADER_FILES})
+set(${CLIENT_PROJECT}_SOURCE_FILES
+        ${SOURCE_ROOT}/CppTcpClient.cpp
+        ${SOURCE_ROOT}/ApplicationUtilities.cpp
+        ${SOURCE_ROOT}/StaticLogger.cpp
+        ${SOURCE_ROOT}/TcpClient.cpp
+        ${SOURCE_ROOT}/IByteStream.cpp)
+
+set(${CLIENT_PROJECT}_HEADER_FILES
+    ${SOURCE_ROOT}/TcpClient.h
+    ${SOURCE_ROOT}/IByteStream.h
+    ${SOURCE_ROOT}/ApplicationUtilities.h
+    ${SOURCE_ROOT}/StaticLogger.h
+    ${SOURCE_ROOT}/GlobalDefinitions.h)
+
+add_executable(${SERVER_PROJECT}
+        ${${CLIENT_PROJECT}_SOURCE_FILES}
+        ${${CLIENT_PROJECT}_HEADER_FILES})
+
+add_executable(${CLIENT_PROJECT}
+        ${${CLIENT_PROJECT}_SOURCE_FILES}
+        ${${CLIENT_PROJECT}_HEADER_FILES})
+
+
+target_link_libraries(${SERVER_PROJECT} pthread)
+target_link_libraries(${CLIENT_PROJECT} pthread)

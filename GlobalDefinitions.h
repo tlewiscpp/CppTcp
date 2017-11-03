@@ -6,10 +6,10 @@
 #define PROJECTTEMPLATE_GLOBALDEFINITIONS_H
 #include "StaticLogger.h"
 
-const char * const PROGRAM_NAME{"ProjectTemplate"};
+const char * const PROGRAM_NAME{"CppTcp"};
 const char * const COMPANY_NAME{"Tyler Lewis"};
-const char * const PROGRAM_LONG_NAME{"ProjectTemplate"};
-const char * const PROGRAM_DESCRIPTION{"This Is A Project Template"};
+const char * const PROGRAM_LONG_NAME{"CppTcp"};
+const char * const PROGRAM_DESCRIPTION{"Tcp server in C++"};
 const char * const REMOTE_URL{""};
 const char * const AUTHOR_NAME{"Tyler Lewis"};
 const int SOFTWARE_MAJOR_VERSION{0};

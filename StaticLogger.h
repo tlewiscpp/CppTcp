@@ -37,6 +37,8 @@ public:
     static void initializeInstance();
     static LogFunction installLogHandler(const LogFunction &logHandler);
 
+    static LogFunction initializeInstance(const LogFunction &logHandler);
+
 private:
     std::function<void(LogLevel, LogContext, const std::string &)> m_logHandler;
 

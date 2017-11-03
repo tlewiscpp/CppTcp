@@ -6,30 +6,36 @@
 #include "GlobalDefinitions.h"
 #include <csignal>
 #include <iomanip>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <iostream>
 
 namespace ApplicationUtilities
 {
 
-
     std::string getTempDirectory() {
-#ifdef _MSC_VER
+    #ifdef _MSC_VER
         //return someBullShit;
-        return "/tmp";
-#else
-        return "/tmp";
-#endif
+            return "/tmp";
+    #else
+        return TStringFormat("/tmp/{0}", PROGRAM_NAME);
+    #endif
     }
 
     std::string getLogFilePath() {
         static std::string logFileName{""};
-        static bool randInit{false};
-        if (!randInit) {
-            srand(time(nullptr));
-            randInit = true;
-        }
+
         if (logFileName.length() > 0) {
             return logFileName;
         } else {
+            auto createDirectoryResult = createDirectory(getTempDirectory());
+            if (createDirectoryResult == -1) {
+                if (errno != EEXIST) {
+                    std::cerr << TStringFormat("Could not create log directory {0}: error code {1} ({2})",
+                                                   getTempDirectory(), errno, strerror(errno)) << std::endl;
+                    abort();
+                }
+            }
             return TStringFormat("{0}/{1}_{2}_{3}", getTempDirectory(), PROGRAM_NAME, currentDate, currentTime());
         }
     }
@@ -104,6 +110,16 @@ std::string currentDate() {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
     return dynamic_cast<std::ostringstream &>(std::ostringstream{} << std::put_time(&tm, "%d-%m-%Y")).str();
+}
+
+int removeFile(const std::string &filePath)
+{
+    return std::remove(filePath.c_str());
+}
+
+int createDirectory(const std::string &filePath, mode_t permissions)
+{
+    return mkdir(filePath.c_str(), permissions);
 }
 
 } //namespace ApplicationUtilities

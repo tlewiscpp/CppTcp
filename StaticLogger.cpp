@@ -46,6 +46,14 @@ void StaticLogger::initializeInstance()
     }
 }
 
+LogFunction StaticLogger::initializeInstance(const LogFunction &logHandler)
+{
+    if (staticLogger == nullptr) {
+        staticLogger = new StaticLogger{};
+        return staticLogger->installLogHandler(logHandler);
+    }
+}
+
 LogFunction StaticLogger::installLogHandler(const LogFunction &logHandler) {
     auto tempLogger = staticLogger->m_logHandler;
     staticLogger->m_logHandler = logHandler;

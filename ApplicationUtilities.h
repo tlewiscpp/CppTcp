@@ -12,7 +12,11 @@ namespace ApplicationUtilities
 {
 void installSignalHandlers(void (*signalHandler)(int));
 std::string TStringFormat(const char *formatting);
+std::string getTempDirectory();
 std::string getLogFilePath();
+
+int removeFile(const std::string &filePath);
+int createDirectory(const std::string &filePath, mode_t permissions = 0777);
 
 
 std::string currentTime();
