@@ -147,21 +147,10 @@ int main(int argc, char *argv[])
             LOG_FATAL("") << "Please specify a host name number to connect to";
         }
     }
-    LOG_INFO() << TStringFormat("Using host name {0}", hostName);
-    LOG_INFO() << TStringFormat("Using port number {0}", portNumber);
     if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
         LOG_FATAL("") << TStringFormat("Port number may not be less than {0} ({1} < 0)", MINIMUM_PORT_NUMBER, portNumber);
     }
-    if (portNumber == -1) {
-        for (int i = 1; i < argc; i++) {
-            if ( (strlen(argv[i]) > 0) && (argv[i][0] != '-') ) {
-                portNumber = static_cast<int>(std::stoi(argv[i]));
-            }
-        }
-        if (portNumber == -1) {
-            portNumber = DEFAULT_PORT_NUMBER;
-        }
-    }
+    LOG_INFO() << TStringFormat("Using host name {0}", hostName);
     LOG_INFO() << TStringFormat("Using port number {0}", portNumber);
     addrinfo hints{};
     memset(reinterpret_cast<void *>(&hints), 0, sizeof(addrinfo));

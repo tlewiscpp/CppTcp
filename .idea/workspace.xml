@@ -49,8 +49,8 @@
       <file leaf-file-name="CppTcpServer.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="290">
-              <caret line="39" column="54" lean-forward="false" selection-start-line="39" selection-start-column="54" selection-end-line="39" selection-end-column="54" />
+            <state relative-caret-position="107">
+              <caret line="153" column="69" lean-forward="false" selection-start-line="153" selection-start-column="69" selection-end-line="153" selection-end-column="69" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -213,7 +213,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.CppTcp_CLIENT">
+  <component name="RunManager" selected="Application.Build All">
     <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Default" EXPLICIT_BUILD_TARGET_NAME="all">
       <envs />
     </configuration>
@@ -223,14 +223,10 @@
     <configuration name="CppTcpServer" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CppTcp" TARGET_NAME="CppTcpServer" CONFIG_NAME="Default" RUN_TARGET_PROJECT_NAME="CppTcp" RUN_TARGET_NAME="CppTcpServer">
       <envs />
     </configuration>
-    <configuration name="CppTcp_CLIENT" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="127.0.0.1 5678" PASS_PARENT_ENVS_2="true" PROJECT_NAME="CppTcp" TARGET_NAME="CppTcp_CLIENT" CONFIG_NAME="Default" RUN_TARGET_PROJECT_NAME="CppTcp" RUN_TARGET_NAME="CppTcp_CLIENT">
-      <envs />
-    </configuration>
-    <list size="4">
+    <list size="3">
       <item index="0" class="java.lang.String" itemvalue="Application.Build All" />
-      <item index="1" class="java.lang.String" itemvalue="Application.CppTcp_CLIENT" />
-      <item index="2" class="java.lang.String" itemvalue="Application.CppTcpClient" />
-      <item index="3" class="java.lang.String" itemvalue="Application.CppTcpServer" />
+      <item index="1" class="java.lang.String" itemvalue="Application.CppTcpClient" />
+      <item index="2" class="java.lang.String" itemvalue="Application.CppTcpServer" />
     </list>
   </component>
   <component name="ShelveChangesManager" show_recycled="false">
@@ -247,12 +243,12 @@
       <workItem from="1509707372942" duration="3257000" />
       <workItem from="1509711520185" duration="910000" />
       <workItem from="1509712444042" duration="10169000" />
-      <workItem from="1509743497739" duration="345000" />
+      <workItem from="1509743497739" duration="439000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="15846000" />
+    <option name="totallyTimeSpent" value="15940000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="27" width="1920" height="1053" extended-state="6" />
@@ -598,8 +594,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="290">
-          <caret line="39" column="54" lean-forward="false" selection-start-line="39" selection-start-column="54" selection-end-line="39" selection-end-column="54" />
+        <state relative-caret-position="107">
+          <caret line="153" column="69" lean-forward="false" selection-start-line="153" selection-start-column="69" selection-end-line="153" selection-end-column="69" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
