@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             }
         }
         if (portNumber == -1) {
-            LOG_FATAL("") << "Please specify a port number to connect to";
+            LOG_FATAL("") << "Please specify a port number to bind to";
         }
     }
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
             }
         }
         if (hostName.empty()) {
-            LOG_FATAL("") << "Please specify a host name number to connect to";
+            hostName = "127.0.0.1";
         }
     }
     if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
             toStdString(portNumber).c_str(), //Service (HTTP, port, etc)
             &hints, //Use the hints specified above
             &addressInfo //Pointer to linked list to be filled in by getaddrinfo 
-         );  
+    );
     //or hints.ai_flags = 0
     //auto returnStatus = getaddrinfo(
     //      "127.0.0.1",

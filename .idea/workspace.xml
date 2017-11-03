@@ -15,7 +15,6 @@
     <list default="true" id="2fae8705-0eec-4856-8bc0-c9f43a4f687c" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CppTcpClient.cpp" afterPath="$PROJECT_DIR$/CppTcpClient.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CppTcpServer.cpp" afterPath="$PROJECT_DIR$/CppTcpServer.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TcpClient.cpp" afterPath="$PROJECT_DIR$/TcpClient.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="/mnt/hdd/GitHub/CppTcp/build/" />
@@ -41,8 +40,8 @@
       <file leaf-file-name="CppTcpClient.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CppTcpClient.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="334">
-              <caret line="207" column="9" lean-forward="true" selection-start-line="207" selection-start-column="9" selection-end-line="207" selection-end-column="9" />
+            <state relative-caret-position="388">
+              <caret line="144" column="56" lean-forward="false" selection-start-line="144" selection-start-column="56" selection-end-line="144" selection-end-column="56" />
               <folding />
             </state>
           </provider>
@@ -61,8 +60,8 @@
       <file leaf-file-name="CppTcpServer.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="316">
-              <caret line="296" column="50" lean-forward="true" selection-start-line="296" selection-start-column="50" selection-end-line="296" selection-end-column="50" />
+            <state relative-caret-position="-44">
+              <caret line="135" column="61" lean-forward="false" selection-start-line="135" selection-start-column="59" selection-end-line="135" selection-end-column="61" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -255,12 +254,12 @@
       <workItem from="1509707372942" duration="3257000" />
       <workItem from="1509711520185" duration="910000" />
       <workItem from="1509712444042" duration="10169000" />
-      <workItem from="1509743497739" duration="1368000" />
+      <workItem from="1509743497739" duration="1767000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="16869000" />
+    <option name="totallyTimeSpent" value="17268000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="27" width="1920" height="1053" extended-state="6" />
@@ -601,8 +600,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="316">
-          <caret line="296" column="50" lean-forward="true" selection-start-line="296" selection-start-column="50" selection-end-line="296" selection-end-column="50" />
+        <state relative-caret-position="-44">
+          <caret line="135" column="61" lean-forward="false" selection-start-line="135" selection-start-column="59" selection-end-line="135" selection-end-column="61" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
@@ -611,8 +610,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CppTcpClient.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="334">
-          <caret line="207" column="9" lean-forward="true" selection-start-line="207" selection-start-column="9" selection-end-line="207" selection-end-column="9" />
+        <state relative-caret-position="388">
+          <caret line="144" column="56" lean-forward="false" selection-start-line="144" selection-start-column="56" selection-end-line="144" selection-end-column="56" />
           <folding />
         </state>
       </provider>

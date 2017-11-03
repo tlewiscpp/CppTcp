@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
             }
         }
         if (hostName.empty()) {
-            LOG_FATAL("") << "Please specify a host name number to connect to";
+            LOG_FATAL("") << "Please specify a host name to connect to";
         }
     }
     LOG_INFO("") << TStringFormat("Using host name {0}", hostName);
