@@ -37,7 +37,7 @@ static struct option long_options[]
         {"help",     no_argument,       nullptr, 'h'},
         {"version",  no_argument,       nullptr, 'v'},
         {"port",     required_argument, nullptr, 'p'},
-        {"host",     required_argument, nullptr, 'n'}
+        {"host",     required_argument, nullptr, 'n'},
         {nullptr, 0, nullptr, 0}
 };
 
