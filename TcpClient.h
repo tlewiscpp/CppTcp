@@ -29,11 +29,8 @@ public:
     void closePort() override;
     void flushRx() override;
     void flushTx() override;
+    void putBack(int c) override;
 
-
-    std::string readLine(bool *timeout) override;
-    std::string readUntil(char until, bool *timeout) override;
-    std::string readUntil(const std::string &until, bool *timeout) override;
     void connect(const std::string &hostName, uint16_t portNumber);
     void connect();
     bool disconnect();

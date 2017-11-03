@@ -29,7 +29,7 @@ class IByteStream
 {
 public:
     IByteStream();
-    virtual ~IByteStream() { }
+    virtual ~IByteStream() = default;
 
     virtual int read() = 0;
     virtual ssize_t write(int) = 0;
@@ -48,12 +48,13 @@ public:
 
     std::string lineEnding() const;
     void setLineEnding(const std::string &str);
+    void setLineEnding(char c);
 
     virtual ssize_t writeLine(const std::string &str);
 
-    virtual std::string readLine(bool *timeout);
-    virtual std::string readUntil(const std::string &until, bool *timeout);
-    virtual std::string readUntil(char until, bool *timeout);
+    virtual std::string readLine(bool *timeout = nullptr);
+    virtual std::string readUntil(const std::string &until, bool *timeout = nullptr);
+    virtual std::string readUntil(char until, bool *timeout = nullptr);
 
 protected:
     virtual void putBack(int c) = 0;
@@ -86,6 +87,7 @@ private:
     static const int DEFAULT_READ_TIMEOUT;
 
     ssize_t write(const std::string &str);
+
 };
 
 } //namespace CppSerialPort

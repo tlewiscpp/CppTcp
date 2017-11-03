@@ -28,6 +28,10 @@ static int verboseLogging{false};
 void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::string &str);
 std::map<int, std::future<void>> connections;
 void closeConnection(int socketDescriptor);
+bool looksLikeIP(const char *str);
+std::string stdinTask();
+
+std::string tcpReadTask();
 
 static struct option long_options[]
 {
@@ -45,7 +49,7 @@ static const int RECEIVE_TIMEOUT{1500};
 static const int constexpr MINIMUM_PORT_NUMBER{1024};
 static int portNumber{-1};
 static std::string hostName{""};
-static const char LINE_ENDING{'\n'}; 
+static const char LINE_ENDING{'\n'};
 static const int constexpr BUFFER_MAX{1024};
 
 static std::mutex coutMutex{};
@@ -57,7 +61,6 @@ void displayVersion();
 void displayHelp();
 
 inline std::string stripLineEnding(std::string str) { if ((str.length() > 0) && (str.back() == LINE_ENDING)) str.pop_back(); return str; }
-template <typename T> std::string toStdString(T t) { return dynamic_cast<std::ostringstream &>(std::ostringstream{} << t).str(); }
 template <char Delimiter = ' '> std::vector<std::string> split(const std::string &str) {
     std::istringstream istr{str};
     std::vector<std::string> returnVector{};
@@ -143,22 +146,38 @@ int main(int argc, char *argv[])
     }
     LOG_INFO("") << TStringFormat("Using host name {0}", hostName);
     LOG_INFO("") << TStringFormat("Using port number {0}", portNumber);
+    LOG_INFO("") << "Enter message to send";
     tcpClient = std::make_shared<TcpClient>(hostName, static_cast<uint16_t>(portNumber));
     tcpClient->setLineEnding(LINE_ENDING);
+    tcpClient->connect();
 
-    
+    using StringFuture = std::future<std::string>;
+    StringFuture tcpFuture{std::async(std::launch::async, tcpReadTask)};
+    StringFuture stdinFuture{std::async(std::launch::async, stdinTask)};
     while (true) {
-
-
+        if (tcpFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            printToStdout("Rx << " + tcpFuture.get());
+            tcpFuture = std::async(std::launch::async, tcpReadTask);
+        }
+        if (stdinFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            std::string toSend{stdinFuture.get()};
+            printToStdout("Tx >> " + toSend);
+            tcpClient->writeLine(toSend);
+            stdinFuture = std::async(std::launch::async, stdinTask);
+        }
     }
-    freeaddrinfo(addressInfo); //Free memory allocated by getaddrinfo
-
-    return 0;
 }
 
-void printAddressMessageToStdout(const std::string &msg, sockaddr *address)
+void printAddressMessageToStdout(const std::string &msg)
 {
     printToStdout(msg + " - [" + hostName + ':' + toStdString(portNumber) + ']');
+}
+
+bool looksLikeIP(const char *str)
+{
+    std::regex ipv4Regex{"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"};
+    std::regex ipv6Regex{"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"};
+    return (std::regex_match(str, ipv4Regex) || std::regex_match(str, ipv6Regex));
 }
 
 void printToStdout(const std::string &msg)

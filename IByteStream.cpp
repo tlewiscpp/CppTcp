@@ -65,6 +65,12 @@ void IByteStream::setLineEnding(const std::string &str)
     this->m_lineEnding = str;
 }
 
+
+void IByteStream::setLineEnding(char c)
+{
+    this->m_lineEnding = std::string(1, c);
+}
+
 ssize_t IByteStream::writeLine(const std::string &str)
 {
     std::lock_guard<std::mutex> writeLock{this->m_writeMutex};

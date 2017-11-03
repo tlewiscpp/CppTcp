@@ -19,6 +19,7 @@ TcpClient::TcpClient(const std::string &hostName, uint16_t portNumber)
     }
     this->m_hostName = hostName;
     this->m_portNumber = portNumber;
+    this->m_socketDescriptor = -1;
 }
 
 TcpClient::~TcpClient()
@@ -155,29 +156,6 @@ ssize_t TcpClient::writeLine(const std::string &str)
     }
 }
 
-
-std::string TcpClient::readLine(bool *timeout)
-{
-    return this->readUntil(this->lineEnding(), timeout);
-}
-
-std::string TcpClient::readUntil(char until, bool *timeout)
-{
-    return this->readUntil(std::string(1, until), timeout);
-}
-
-std::string TcpClient::readUntil(const std::string &until, bool *timeout)
-{
-    auto foundItem = this->m_readBuffer.find(this->lineEnding());
-    if (foundItem != std::string::npos) {
-        std::string returnString{this->m_readBuffer.substr(0, foundItem)};
-        this->m_readBuffer = this->m_readBuffer.substr(foundItem + until.length());
-        return returnString;
-    } else {
-        return IByteStream::readUntil(until, timeout);
-    }
-}
-
 std::string TcpClient::portName() const
 {
     return '[' + this->m_hostName + ':' + toStdString(this->m_portNumber) + ']';
@@ -210,6 +188,11 @@ void TcpClient::flushRx()
 void TcpClient::flushTx()
 {
 
+}
+
+void TcpClient::putBack(int c)
+{
+    this->m_readBuffer.insert(this->m_readBuffer.begin(), static_cast<char>(c));
 }
 
 timeval TcpClient::toTimeVal(uint32_t totalTimeout)

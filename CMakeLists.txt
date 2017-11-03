@@ -37,8 +37,8 @@ set(${CLIENT_PROJECT}_HEADER_FILES
     ${SOURCE_ROOT}/GlobalDefinitions.h)
 
 add_executable(${SERVER_PROJECT}
-        ${${CLIENT_PROJECT}_SOURCE_FILES}
-        ${${CLIENT_PROJECT}_HEADER_FILES})
+        ${${SERVER_PROJECT}_SOURCE_FILES}
+        ${${SERVER_PROJECT}_HEADER_FILES})
 
 add_executable(${CLIENT_PROJECT}
         ${${CLIENT_PROJECT}_SOURCE_FILES}
