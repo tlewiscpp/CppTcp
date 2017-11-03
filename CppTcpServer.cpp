@@ -285,17 +285,19 @@ void handleConnection(int socketDescriptor, sockaddr addressStorage)
             }
         } else if (strlen(buffer) != 0) {
             std::string receivedString{"Message received: \"" + stripLineEnding(buffer) + "\""};
-            printAddressMessageToStdout(receivedString, &addressStorage);
+            printAddressMessageToStdout(TStringFormat("Rx << {0}", stripLineEnding(buffer)), &addressStorage);
             receivedString += LINE_ENDING;
             unsigned sentBytes{0};
             //Make sure all bytes are sent
             while (sentBytes < receivedString.length()) {
-                auto sendResult = send(socketDescriptor, receivedString.c_str(), receivedString.length(), 0);
+                auto toSend = receivedString.substr(sentBytes);
+                auto sendResult = send(socketDescriptor, toSend.c_str(), toSend.length(), 0);
                 if (sendResult == -1) {
                     printToStdout(TStringFormat("send(int, const void *, int, int): error code {0} ({1})", errno, strerror(errno)));
                     exitApplication(EXIT_FAILURE);
                 }
                 sentBytes += sendResult;
+                printAddressMessageToStdout(TStringFormat("Tx >> {0}", stripLineEnding(receivedString)), &addressStorage);
             }
         } else if (receiveResult == 0) {
             printAddressMessageToStdout("Connection closed", &addressStorage);

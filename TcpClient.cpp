@@ -114,20 +114,20 @@ int TcpClient::read()
     }
 
     char buffer[BUFFER_MAX];
-    while (true) {
-        memset(buffer, '\0', BUFFER_MAX);
-        auto receiveResult = recv(this->m_socketDescriptor, buffer, BUFFER_MAX - 1, 0); //no flags
-        if (receiveResult == -1) {
-            if (errno != EAGAIN) {
-                throw std::runtime_error("recv(int, void *, size_t, int): error code " + toStdString(errno) + " (" + strerror(errno) + ")");
-            }
-        } else if (strlen(buffer) != 0) {
-            this->m_readBuffer += std::string{buffer};
-            return this->m_readBuffer[0];
-        } else if (receiveResult == 0) {
-            this->disconnect();
-            return -1;
+    memset(buffer, '\0', BUFFER_MAX);
+    auto receiveResult = recv(this->m_socketDescriptor, buffer, BUFFER_MAX - 1, 0); //no flags
+    if (receiveResult == -1) {
+        if (errno != EAGAIN) {
+            throw std::runtime_error("recv(int, void *, size_t, int): error code " + toStdString(errno) + " (" + strerror(errno) + ")");
+        } else {
+            return 0;
         }
+    } else if (strlen(buffer) != 0) {
+        this->m_readBuffer += std::string{buffer};
+        return this->m_readBuffer[0];
+    } else if (receiveResult == 0) {
+        this->disconnect();
+        throw std::runtime_error("Server hung up unexpectedly");
     }
 }
 

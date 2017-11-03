@@ -13,7 +13,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2fae8705-0eec-4856-8bc0-c9f43a4f687c" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CppTcpClient.cpp" afterPath="$PROJECT_DIR$/CppTcpClient.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CppTcpServer.cpp" afterPath="$PROJECT_DIR$/CppTcpServer.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TcpClient.cpp" afterPath="$PROJECT_DIR$/TcpClient.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="/mnt/hdd/GitHub/CppTcp/build/" />
@@ -36,21 +38,31 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CppTcpClient.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="CppTcpClient.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CppTcpClient.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2754">
-              <caret line="175" column="0" lean-forward="false" selection-start-line="175" selection-start-column="0" selection-end-line="181" selection-end-column="1" />
+            <state relative-caret-position="334">
+              <caret line="207" column="9" lean-forward="true" selection-start-line="207" selection-start-column="9" selection-end-line="207" selection-end-column="9" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CppTcpServer.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="TcpClient.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/TcpClient.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="193">
+              <caret line="45" column="23" lean-forward="false" selection-start-line="45" selection-start-column="23" selection-end-line="45" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CppTcpServer.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="107">
-              <caret line="153" column="69" lean-forward="false" selection-start-line="153" selection-start-column="69" selection-end-line="153" selection-end-column="69" />
+            <state relative-caret-position="316">
+              <caret line="296" column="50" lean-forward="true" selection-start-line="296" selection-start-column="50" selection-end-line="296" selection-end-column="50" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -71,8 +83,8 @@
       <file leaf-file-name="TcpClient.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/TcpClient.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="69">
-              <caret line="75" column="61" lean-forward="false" selection-start-line="75" selection-start-column="61" selection-end-line="75" selection-end-column="61" />
+            <state relative-caret-position="49">
+              <caret line="122" column="21" lean-forward="true" selection-start-line="122" selection-start-column="21" selection-end-line="122" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -92,10 +104,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>installSi</find>
-      <find>addConnection</find>
-      <find>removeCon</find>
-      <find>coreLog</find>
       <find>install</find>
       <find>geLog</find>
       <find>getLog</find>
@@ -122,6 +130,10 @@
       <find>toStdString</find>
       <find>LOG_INFO(&quot;&quot;)</find>
       <find>looksLikeIP</find>
+      <find>Tx</find>
+      <find>printA</find>
+      <find>printToStd</find>
+      <find>readLine</find>
     </findStrings>
     <replaceStrings>
       <replace>LOG_INFO()</replace>
@@ -140,11 +152,11 @@
         <option value="$PROJECT_DIR$/IByteStream.cpp" />
         <option value="$PROJECT_DIR$/IByteStream.h" />
         <option value="$PROJECT_DIR$/TcpClient.h" />
-        <option value="$PROJECT_DIR$/TcpClient.cpp" />
-        <option value="$PROJECT_DIR$/CppTcpClient.cpp" />
         <option value="$PROJECT_DIR$/GlobalDefinitions.h" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/TcpClient.cpp" />
         <option value="$PROJECT_DIR$/CppTcpServer.cpp" />
+        <option value="$PROJECT_DIR$/CppTcpClient.cpp" />
       </list>
     </option>
   </component>
@@ -243,12 +255,12 @@
       <workItem from="1509707372942" duration="3257000" />
       <workItem from="1509711520185" duration="910000" />
       <workItem from="1509712444042" duration="10169000" />
-      <workItem from="1509743497739" duration="439000" />
+      <workItem from="1509743497739" duration="1368000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="15940000" />
+    <option name="totallyTimeSpent" value="16869000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="27" width="1920" height="1053" extended-state="6" />
@@ -524,13 +536,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/TcpClient.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="31" column="33" lean-forward="false" selection-start-line="31" selection-start-column="33" selection-end-line="31" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/StaticLogger.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="810">
@@ -543,6 +548,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
           <caret line="718" column="0" lean-forward="false" selection-start-line="718" selection-start-column="0" selection-end-line="718" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -550,6 +556,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
           <caret line="6123" column="0" lean-forward="false" selection-start-line="6123" selection-start-column="0" selection-end-line="6123" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -557,14 +564,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
           <caret line="705" column="0" lean-forward="false" selection-start-line="705" selection-start-column="0" selection-end-line="705" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/TcpClient.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="69">
-          <caret line="75" column="61" lean-forward="false" selection-start-line="75" selection-start-column="61" selection-end-line="75" selection-end-column="61" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -584,21 +583,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CppTcpClient.cpp">
+    <entry file="file://$PROJECT_DIR$/TcpClient.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2754">
-          <caret line="175" column="0" lean-forward="false" selection-start-line="175" selection-start-column="0" selection-end-line="181" selection-end-column="1" />
+        <state relative-caret-position="193">
+          <caret line="45" column="23" lean-forward="false" selection-start-line="45" selection-start-column="23" selection-end-line="45" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/TcpClient.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="49">
+          <caret line="122" column="21" lean-forward="true" selection-start-line="122" selection-start-column="21" selection-end-line="122" selection-end-column="21" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/CppTcpServer.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="107">
-          <caret line="153" column="69" lean-forward="false" selection-start-line="153" selection-start-column="69" selection-end-line="153" selection-end-column="69" />
+        <state relative-caret-position="316">
+          <caret line="296" column="50" lean-forward="true" selection-start-line="296" selection-start-column="50" selection-end-line="296" selection-end-column="50" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CppTcpClient.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="334">
+          <caret line="207" column="9" lean-forward="true" selection-start-line="207" selection-start-column="9" selection-end-line="207" selection-end-column="9" />
+          <folding />
         </state>
       </provider>
     </entry>

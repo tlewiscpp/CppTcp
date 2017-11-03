@@ -162,7 +162,6 @@ int main(int argc, char *argv[])
         }
         if (stdinFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
             std::string toSend{stdinFuture.get()};
-            printToStdout("Tx >> " + toSend);
             tcpClient->writeLine(toSend);
             stdinFuture = std::async(std::launch::async, stdinTask);
         }
@@ -201,9 +200,10 @@ std::string stdinTask() {
 
 std::string tcpReadTask() {
     std::string returnString{""};
+    bool timeout{false};
     while (true) {
-        returnString = tcpClient->readLine();
-        if (!returnString.empty()) {
+        returnString = tcpClient->readLine(&timeout);
+        if ( (!returnString.empty()) && (!timeout) ) {
             return returnString;
         }
     }
