@@ -35,16 +35,16 @@ const char *COMPILER_NAME{"msvc"};
 
 
 #ifndef LOG_DEBUG
-#    define LOG_DEBUG(x) Logger::createInstance(LogLevel::Debug, __FILE__, __LINE__, __func__, x)
+#    define LOG_DEBUG(x) Logger::createInstance(LogLevel::Debug, __FILE__, __LINE__, __func__)
 #endif //LOG_FATAL
 #ifndef LOG_WARN
-#    define LOG_WARN(x) Logger::createInstance(LogLevel::Debug, __FILE__, __LINE__, __func__, x)
+#    define LOG_WARN(x) Logger::createInstance(LogLevel::Debug, __FILE__, __LINE__, __func__)
 #endif //LOG_WARN
 #ifndef LOG_INFO
-#    define LOG_INFO(x) Logger::createInstance(LogLevel::Info, __FILE__, __LINE__, __func__, x)
+#    define LOG_INFO(x) Logger::createInstance(LogLevel::Info, __FILE__, __LINE__, __func__)
 #endif //LOG_INFO
 #ifndef LOG_FATAL
-#    define LOG_FATAL(x) Logger::createInstance(LogLevel::Fatal, __FILE__, __LINE__, __func__, x)
+#    define LOG_FATAL(x) Logger::createInstance(LogLevel::Fatal, __FILE__, __LINE__, __func__)
 #endif //LOG_FATAL
 
 #ifndef STRING_TO_INT

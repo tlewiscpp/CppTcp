@@ -27,6 +27,7 @@ static int verboseLogging{false};
 void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::string &str);
 std::map<int, std::future<void>> connections;
 void closeConnection(int socketDescriptor);
+bool looksLikeIP(const char *str);
 
 static struct option long_options[]
 {
@@ -36,6 +37,7 @@ static struct option long_options[]
         {"help",     no_argument,       nullptr, 'h'},
         {"version",  no_argument,       nullptr, 'v'},
         {"port",     required_argument, nullptr, 'p'},
+        {"host",     required_argument, nullptr, 'n'}
         {nullptr, 0, nullptr, 0}
 };
 
@@ -45,9 +47,9 @@ static const int MAX_INCOMING_CONNECTIONS{10};
 static const int constexpr MINIMUM_PORT_NUMBER{1024};
 static const int DEFAULT_PORT_NUMBER{5678};
 static int portNumber{-1};
-static const char LINE_ENDING{'\n'}; 
+std::string hostName{""};
+static const char LINE_ENDING{'\n'};
 static const int constexpr BUFFER_MAX{1024};
-static char port[BUFFER_MAX];
 
 static std::mutex coutMutex{};
 
@@ -58,7 +60,6 @@ void displayVersion();
 void displayHelp();
 
 inline std::string stripLineEnding(std::string str) { if ((str.length() > 0) && (str.back() == LINE_ENDING)) str.pop_back(); return str; }
-template <typename T> std::string toStdString(T t) { return dynamic_cast<std::ostringstream &>(std::ostringstream{} << t).str(); }
 template <char Delimiter = ' '> std::vector<std::string> split(const std::string &str) {
     std::istringstream istr{str};
     std::vector<std::string> returnVector{};
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
     opterr = 0;
 
     while (true) {
-        auto currentOption = getopt_long(argc, argv, "hvp:", long_options, &optionIndex);
+        auto currentOption = getopt_long(argc, argv, "hvp:n:", long_options, &optionIndex);
         /* Detect the end of the options. */
         if (currentOption == -1) {
             break;
@@ -111,14 +112,43 @@ int main(int argc, char *argv[])
             case 'p':
                 portNumber = std::stoi(optarg);
                 break;
+            case 'n':
+                hostName = optarg;
+                break;
             default:
-                LOG_WARN("") << TStringFormat(R"(Unknown option "{0}", skipping)", long_options[optionIndex].name);
+                LOG_WARN() << TStringFormat(R"(Unknown option "{0}", skipping)", long_options[optionIndex].name);
         }
     }
     displayVersion();
-    LOG_INFO("") << TStringFormat("Using log file {0}", ApplicationUtilities::getLogFilePath());
+    LOG_INFO() << TStringFormat("Using log file {0}", ApplicationUtilities::getLogFilePath());
 
 
+    if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
+        LOG_FATAL("") << TStringFormat("Port number may not be less than {0} ({1} < 0)", MINIMUM_PORT_NUMBER, portNumber);
+    }
+    if (portNumber == -1) {
+        for (int i = 1; i < argc; i++) {
+            if ( (strlen(argv[i]) > 0) && (argv[i][0] != '-') && !(looksLikeIP(argv[i]))) {
+                portNumber = std::stoi(argv[i]);
+            }
+        }
+        if (portNumber == -1) {
+            LOG_FATAL("") << "Please specify a port number to connect to";
+        }
+    }
+
+    if (hostName.empty()) {
+        for (int i = 1; i < argc; i++) {
+            if ( (strlen(argv[i]) > 0) && (argv[i][0] != '-') && (looksLikeIP(argv[i]))) {
+                hostName = argv[i];
+            }
+        }
+        if (hostName.empty()) {
+            LOG_FATAL("") << "Please specify a host name number to connect to";
+        }
+    }
+    LOG_INFO() << TStringFormat("Using host name {0}", hostName);
+    LOG_INFO() << TStringFormat("Using port number {0}", portNumber);
     if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
         LOG_FATAL("") << TStringFormat("Port number may not be less than {0} ({1} < 0)", MINIMUM_PORT_NUMBER, portNumber);
     }
@@ -132,18 +162,16 @@ int main(int argc, char *argv[])
             portNumber = DEFAULT_PORT_NUMBER;
         }
     }
-    LOG_INFO("") << TStringFormat("Using port number {0}", portNumber);
-    memset(port, '\0', BUFFER_MAX);
-    strcpy(port, std::to_string(portNumber).c_str());
+    LOG_INFO() << TStringFormat("Using port number {0}", portNumber);
     addrinfo hints{};
     memset(reinterpret_cast<void *>(&hints), 0, sizeof(addrinfo));
     hints.ai_family = AF_UNSPEC; //IPV4 or IPV6
     hints.ai_socktype = SOCK_STREAM; //TCP
-    hints.ai_flags = AI_PASSIVE; //fill in IP for me
+    hints.ai_flags = 0; //Let me specify IP Address
     installSignalHandlers(signalHandler);
     auto returnStatus = getaddrinfo(
-            nullptr, //IP Address or hostname (nullptr becase of AI_PASSIVE)
-            port, //Service (HTTP, port, etc) 
+            hostName.c_str(),
+            toStdString(portNumber).c_str(), //Service (HTTP, port, etc)
             &hints, //Use the hints specified above
             &addressInfo //Pointer to linked list to be filled in by getaddrinfo 
          );  
@@ -236,9 +264,14 @@ int main(int argc, char *argv[])
         connections.emplace(socketDescriptor, std::async(std::launch::async, handleConnection, acceptResult, acceptedAddress));
 
     }
-    freeaddrinfo(addressInfo); //Free memory allocated by getaddrinfo
+}
 
-    return 0;
+
+bool looksLikeIP(const char *str)
+{
+    static const std::regex ipv4Regex{"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"};
+    static const std::regex ipv6Regex{"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"};
+    return (std::regex_match(str, ipv4Regex) || std::regex_match(str, ipv6Regex));
 }
 
 void handleConnection(int socketDescriptor, sockaddr addressStorage)
@@ -340,7 +373,7 @@ void signalHandler(int signal)
     if ( (signal == SIGUSR1) || (signal == SIGUSR2) ) {
         return;
     }
-    LOG_INFO("") << TStringFormat("Signal received: {0} ({1})", signal, strsignal(signal));
+    LOG_INFO() << TStringFormat("Signal received: {0} ({1})", signal, strsignal(signal));
     exitApplication(EXIT_FAILURE);
 }
 
@@ -348,9 +381,9 @@ void signalHandler(int signal)
 void displayVersion()
 {
     using namespace ApplicationUtilities;
-    LOG_INFO("") << TStringFormat("{0}, v{1}.{2}.{3}", PROGRAM_NAME, SOFTWARE_MAJOR_VERSION, SOFTWARE_MINOR_VERSION, SOFTWARE_PATCH_VERSION);
-    LOG_INFO("") << TStringFormat("Written by {0}", AUTHOR_NAME);
-    LOG_INFO("") << TStringFormat("Built with {0} v{1}.{2}.{3}, {4}", COMPILER_NAME, COMPILER_MAJOR_VERSION, COMPILER_MINOR_VERSION, COMPILER_PATCH_VERSION, __DATE__);
+    LOG_INFO() << TStringFormat("{0}, v{1}.{2}.{3}", PROGRAM_NAME, SOFTWARE_MAJOR_VERSION, SOFTWARE_MINOR_VERSION, SOFTWARE_PATCH_VERSION);
+    LOG_INFO() << TStringFormat("Written by {0}", AUTHOR_NAME);
+    LOG_INFO() << TStringFormat("Built with {0} v{1}.{2}.{3}, {4}", COMPILER_NAME, COMPILER_MAJOR_VERSION, COMPILER_MINOR_VERSION, COMPILER_PATCH_VERSION, __DATE__);
 }
 
 
