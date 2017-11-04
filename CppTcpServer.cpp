@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <ifaddrs.h>
 #include <netdb.h>
 
 #include <unistd.h>
@@ -28,6 +29,9 @@ void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::strin
 std::map<int, std::future<void>> connections;
 void closeConnection(int socketDescriptor);
 bool looksLikeIP(const char *str);
+bool startsWith(const std::string &str, const std::string &beginning);
+std::vector<std::pair<std::string, std::string>> getLocalIP();
+std::string getDefaultHostName();
 
 static struct option long_options[]
 {
@@ -144,7 +148,7 @@ int main(int argc, char *argv[])
             }
         }
         if (hostName.empty()) {
-            hostName = "127.0.0.1";
+            hostName = getDefaultHostName();
         }
     }
     if ( (portNumber != -1) && (portNumber < MINIMUM_PORT_NUMBER) ) {
@@ -470,4 +474,56 @@ void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::strin
     if (logLevel == LogLevel::Fatal) {
         abort();
     }
+}
+
+using StringPair = std::pair<std::string, std::string>;
+
+bool startsWith(const std::string &str, const std::string &beginning)
+{
+    if (beginning.length() > str.length()) {
+        return false;
+    }
+    return std::equal(beginning.begin(), beginning.end(), str.begin());
+}
+
+std::vector<StringPair> getLocalIP()
+{
+    std::vector<StringPair> returnPair{};
+    ifaddrs *addressInfo{nullptr};
+    auto getAddressInfoResult = getifaddrs(&addressInfo);
+    if (getAddressInfoResult == -1) {
+        throw std::runtime_error("getifaddrs(sockaddr *): error code " + std::to_string(errno) + " (" + strerror(errno) + ')');
+    }
+    auto tempAddress = addressInfo;
+    while (tempAddress) {
+        if (tempAddress->ifa_addr) {
+            if (tempAddress->ifa_addr->sa_family == AF_INET) {
+                auto pAddr = reinterpret_cast<sockaddr_in *>(tempAddress->ifa_addr);
+                char nameBuffer[INET_ADDRSTRLEN];
+                memset(nameBuffer, '\0', INET_ADDRSTRLEN);
+                inet_ntop(AF_INET, &(pAddr->sin_addr), nameBuffer, INET_ADDRSTRLEN);
+                returnPair.emplace_back(tempAddress->ifa_name, nameBuffer);
+            } else if (tempAddress->ifa_addr->sa_family == AF_INET6) {
+                auto pAddr = reinterpret_cast<sockaddr_in6 *>(tempAddress->ifa_addr);
+                char nameBuffer[INET6_ADDRSTRLEN];
+                memset(nameBuffer, '\0', INET6_ADDRSTRLEN);
+                inet_ntop(AF_INET6, &(pAddr->sin6_addr), nameBuffer, INET6_ADDRSTRLEN);
+                returnPair.emplace_back(tempAddress->ifa_name, nameBuffer);
+            }
+        }
+        tempAddress = tempAddress->ifa_next;
+    }
+
+    freeifaddrs(addressInfo);
+    return returnPair;
+} 
+
+std::string getDefaultHostName()
+{
+    for (const auto &it : getLocalIP()) {
+        if (startsWith(it.second, "192")) {
+            return it.second;
+        }
+    }
+    return "127.0.0.1";
 }
