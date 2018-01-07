@@ -35,9 +35,7 @@ std::string tcpReadTask();
 
 static struct option long_options[]
 {
-        /* These options set a flag. */
         {"verbose",  no_argument,       &verboseLogging, 1},
-        /* These options don’t set a flag, we distinguish them by their indices. */
         {"help",     no_argument,       nullptr, 'h'},
         {"version",  no_argument,       nullptr, 'v'},
         {"port",     required_argument, nullptr, 'p'},
@@ -72,7 +70,7 @@ template <char Delimiter = ' '> std::vector<std::string> split(const std::string
 void printToStdout(const std::string &msg);
 void printAddressMessageToStdout(const std::string &msg);
 
-static std::shared_ptr<TcpClient> tcpClient{nullptr};
+static std::shared_ptr<CppSerialPort::TcpClient> tcpClient{nullptr};
 
 int main(int argc, char *argv[])
 {
@@ -148,7 +146,7 @@ int main(int argc, char *argv[])
     LOG_INFO("") << TStringFormat("Using host name {0}", hostName);
     LOG_INFO("") << TStringFormat("Using port number {0}", portNumber);
     LOG_INFO("") << "Enter message to send";
-    tcpClient = std::make_shared<TcpClient>(hostName, static_cast<uint16_t>(portNumber));
+    tcpClient = std::make_shared<CppSerialPort::TcpClient>(hostName, static_cast<uint16_t>(portNumber));
     tcpClient->setLineEnding(LINE_ENDING);
     tcpClient->connect();
 
