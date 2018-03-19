@@ -7,6 +7,7 @@
 #include <sstream>
 #include <utility>
 #include <tuple>
+struct option;
 
 namespace ApplicationUtilities
 {
@@ -14,6 +15,8 @@ void installSignalHandlers(void (*signalHandler)(int));
 std::string TStringFormat(const char *formatting);
 std::string getTempDirectory();
 std::string getLogFilePath();
+
+    std::string buildShortOptions(option *longOptions, size_t numberOfLongOptions);
 
 int removeFile(const std::string &filePath);
 int createDirectory(const std::string &filePath, mode_t permissions = 0777);

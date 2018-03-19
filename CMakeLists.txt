@@ -20,6 +20,7 @@ set(${SERVER_PROJECT}_SOURCE_FILES
 set (${SERVER_PROJECT}_HEADER_FILES
         ${SOURCE_ROOT}/ApplicationUtilities.h
         ${SOURCE_ROOT}/StaticLogger.h
+        ${SOURCE_ROOT}/ProgramOption.h
         ${SOURCE_ROOT}/GlobalDefinitions.h)
 
 set(${CLIENT_PROJECT}_SOURCE_FILES
@@ -34,7 +35,8 @@ set(${CLIENT_PROJECT}_HEADER_FILES
     ${SOURCE_ROOT}/IByteStream.h
     ${SOURCE_ROOT}/ApplicationUtilities.h
     ${SOURCE_ROOT}/StaticLogger.h
-    ${SOURCE_ROOT}/GlobalDefinitions.h)
+        ${SOURCE_ROOT}/ProgramOption.h
+        ${SOURCE_ROOT}/GlobalDefinitions.h)
 
 add_executable(${SERVER_PROJECT}
         ${${SERVER_PROJECT}_SOURCE_FILES}

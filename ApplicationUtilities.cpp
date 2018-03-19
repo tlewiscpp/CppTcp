@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <iostream>
+#include <getopt.h>
 
 namespace ApplicationUtilities
 {
@@ -20,6 +21,22 @@ namespace ApplicationUtilities
     #else
         return TStringFormat("/tmp/{0}", PROGRAM_NAME);
     #endif
+    }
+
+    std::string buildShortOptions(option *longOptions, size_t numberOfLongOptions)
+    {
+        std::string returnString{""};
+        for (size_t i = 0; i < numberOfLongOptions; i++) {
+            option *currentOption{longOptions + i};
+            if (currentOption->val == 0) {
+                continue;
+            }
+            returnString += static_cast<char>(currentOption->val);
+            if (currentOption->has_arg == required_argument) {
+                returnString += ':';
+            }
+        }
+        return returnString;
     }
 
     std::string getLogFilePath() {

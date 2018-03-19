@@ -18,11 +18,14 @@
 #include "ApplicationUtilities.h"
 #include "GlobalDefinitions.h"
 #include "TcpClient.h"
+#include "ProgramOption.h"
 
 #include <getopt.h>
 #include <arpa/inet.h>
 
 using namespace ApplicationUtilities;
+
+#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
 
 static int verboseLogging{false};
 void globalLogHandler(LogLevel logLevel, LogContext logContext, const std::string &str);
@@ -33,21 +36,41 @@ std::string stdinTask();
 
 std::string tcpReadTask();
 
-static struct option long_options[]
-{
-        {"verbose",  no_argument,       &verboseLogging, 1},
-        {"help",     no_argument,       nullptr, 'h'},
-        {"version",  no_argument,       nullptr, 'v'},
-        {"port",     required_argument, nullptr, 'p'},
-        {"host",     required_argument, nullptr, 'n'},
+#define PROGRAM_OPTION_COUNT 6
+
+static const ProgramOption verboseOption       {'e', "verbose", no_argument, "Enable verbose logging"};
+static const ProgramOption helpOption          {'h', "help", no_argument, "Display help text and exit"};
+static const ProgramOption versionOption       {'v', "version", no_argument, "Display version text and exit"};
+static const ProgramOption portOption          {'p', "port", required_argument, "Specify the port to bind to (ex. 5555)"};
+static const ProgramOption hostOption          {'h', "host", required_argument, "Specify the hostname to use (ex. example.com or 192.168.1.15"};
+static const ProgramOption udpOption           {'u', "udp", no_argument, "Use UDP protocol instead of default (TCP)"};
+
+static std::array<const ProgramOption *, PROGRAM_OPTION_COUNT> programOptions{
+        &verboseOption,
+        &helpOption,
+        &versionOption,
+        &portOption,
+        &hostOption,
+        &udpOption
+};
+
+static struct option longOptions[PROGRAM_OPTION_COUNT + 1] {
+        verboseOption.toPosixOption(),
+        helpOption.toPosixOption(),
+        versionOption.toPosixOption(),
+        portOption.toPosixOption(),
+        hostOption.toPosixOption(),
+        udpOption.toPosixOption(),
         {nullptr, 0, nullptr, 0}
 };
+
 
 
 static const int RECEIVE_TIMEOUT{1500};
 static const int constexpr MINIMUM_PORT_NUMBER{1024};
 static int portNumber{-1};
 static std::string hostName{""};
+static bool useTcp{true};
 static const char LINE_ENDING{'\n'};
 static const int constexpr BUFFER_MAX{1024};
 
@@ -77,28 +100,16 @@ int main(int argc, char *argv[])
     //[[maybe_unused]]
     StaticLogger::initializeInstance(globalLogHandler);
 
-    /* getopt_long stores the option index here. */
     int optionIndex{0};
     opterr = 0;
 
     while (true) {
-        auto currentOption = getopt_long(argc, argv, "hvp:n:", long_options, &optionIndex);
-        /* Detect the end of the options. */
+        std::string shortOptions{ApplicationUtilities::buildShortOptions(longOptions, ARRAY_SIZE(longOptions))};
+        auto currentOption = getopt_long(argc, argv, shortOptions.c_str(), longOptions, &optionIndex);
         if (currentOption == -1) {
             break;
         }
         switch (currentOption) {
-            case 0:
-                /* If this option set a flag, do nothing else now. */
-                if (long_options[optionIndex].flag != nullptr) {
-                    break;
-                }
-                std::cout << "Option " << long_options[optionIndex].name;
-                if (optarg) {
-                    std::cout << " with arg " << optarg;
-                }
-                std::cout << std::endl;
-                break;
             case 'h':
                 displayHelp();
                 exit(EXIT_SUCCESS);
@@ -111,8 +122,11 @@ int main(int argc, char *argv[])
             case 'n':
                 hostName = optarg;
                 break;
+            case 'u':
+                useTcp = false;
+                break;
             default:
-                LOG_WARN("") << TStringFormat(R"(Unknown option "{0}", skipping)", long_options[optionIndex].name);
+                LOG_WARN() << TStringFormat(R"(Unknown option "{0}", skipping)", longOptions[optionIndex].name);
         }
     }
     displayVersion();
@@ -231,12 +245,9 @@ void displayHelp()
     using namespace ApplicationUtilities;
     std::cout << TStringFormat("Usage: {0} Option [=value]", PROGRAM_NAME) << std::endl;
     std::cout << "Options: " << std::endl;
-    std::cout << "    -h, --h, -help, --help: Display this help text" << std::endl;
-    std::cout << "    -v, --v, -version, --version: Display the version" << std::endl;
-    std::cout << "    -e, --e, -verbose, --verbose: Enable verbose output" << std::endl;
-    std::cout << "    -p, --p, -port, --port: Specify port number" << std::endl;
-    std::cout << "    -n, --n, -name, --name: Specify host name" << std::endl;
-
+    for (const auto &it : programOptions) {
+        std::cout << "    -" << static_cast<char>(it->shortOption()) << ", --" << it->longOption() << ": " << it->description() << std::endl;
+    }
 }
 
 template <typename StringType, typename FileStringType>
