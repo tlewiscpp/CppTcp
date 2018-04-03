@@ -7,41 +7,34 @@
 #include <sstream>
 #include <utility>
 #include <tuple>
-struct option;
 
-namespace ApplicationUtilities
-{
-void installSignalHandlers(void (*signalHandler)(int));
-std::string TStringFormat(const char *formatting);
-std::string getTempDirectory();
-std::string getLogFilePath();
+namespace ApplicationUtilities  {
 
-    std::string buildShortOptions(option *longOptions, size_t numberOfLongOptions);
+    void installSignalHandlers(void (*signalHandler)(int));
+    std::string TStringFormat(const char *formatting);
+    std::string getTempDirectory();
+    std::string getLogFilePath();
 
 int removeFile(const std::string &filePath);
 int createDirectory(const std::string &filePath, mode_t permissions = 0777);
+bool fileExists(const std::string &filePath);
+bool directoryExists(const std::string &directoryPath);
+std::string getCurrentDirectory();
+bool looksLikeFilePath(const std::string &str);
+int getPID();
 
-
-std::string currentTime();
+    std::string currentTime();
 std::string currentDate();
 
 bool endsWith(const std::string &str, const std::string &ending);
 bool endsWith(const std::string &str, char ending);
+bool startsWith(const std::string &str, const std::string &start);
+bool startsWith(const std::string &str, char start);
 
 template <typename T> static inline std::string toStdString(T t) { return dynamic_cast<std::ostringstream &>(std::ostringstream{} << t).str(); }
 
-template <char Delimiter>
-std::vector<std::string> split(const std::string &str)
-{
-    std::string tempString{""};
-    std::vector<std::string> returnVector{};
-    std::stringstream istr{str};
-    for(std::string s{""}; std::getline(istr, s, Delimiter); ( (s.length() > 0) ?  returnVector.push_back(s) : (void)returnVector.size() ));
-    return returnVector;
-}
-
-
-std::vector<std::string> split(std::string str, const std::string &delimiter);
+int split(std::vector<std::string> &output, const std::string &str, char delimiter);
+int split(std::vector<std::string> &output, const std::string &str, const std::string &delimiter);
 
 
 /*Base case to break recursion*/

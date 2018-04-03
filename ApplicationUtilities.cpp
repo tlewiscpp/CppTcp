@@ -1,18 +1,15 @@
-//
-// Created by pinguinsan on 11/2/17.
-//
-
 #include "ApplicationUtilities.h"
 #include "GlobalDefinitions.h"
 #include <csignal>
 #include <iomanip>
+#include <iostream>
+
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <iostream>
-#include <getopt.h>
+#include <climits>
 
-namespace ApplicationUtilities
-{
+namespace ApplicationUtilities {
 
     std::string getTempDirectory() {
     #ifdef _MSC_VER
@@ -23,20 +20,17 @@ namespace ApplicationUtilities
     #endif
     }
 
-    std::string buildShortOptions(option *longOptions, size_t numberOfLongOptions)
-    {
-        std::string returnString{""};
-        for (size_t i = 0; i < numberOfLongOptions; i++) {
-            option *currentOption{longOptions + i};
-            if (currentOption->val == 0) {
-                continue;
-            }
-            returnString += static_cast<char>(currentOption->val);
-            if (currentOption->has_arg == required_argument) {
-                returnString += ':';
-            }
-        }
-        return returnString;
+    bool looksLikeFilePath(const std::string &str) {
+        static const std::regex DIRECTORY_REGEX{R"(^(/)?([^/\0]+(/)?)+$)"};
+        return ( ((str.length() == 1) && (str.front() == '.')) || ((std::regex_match(str, DIRECTORY_REGEX)) && startsWith(str, '/')) );
+    }
+
+    int getPID() {
+#if defined(_WIN32)
+#    error "Not yet implemented"
+#else
+        return getpid();
+#endif //defined(_WIN32)
     }
 
     std::string getLogFilePath() {
@@ -57,21 +51,23 @@ namespace ApplicationUtilities
         }
     }
 
-    bool endsWith(const std::string &str, const std::string &ending)
-    {
-        if (str.length() < ending.length()) {
-            return false;
-        }
-        return (std::equal(ending.rbegin(), ending.rend(), str.rbegin()));
+    bool endsWith(const std::string &str, const std::string &ending) {
+        return (str.length() < ending.length()) ? false : std::equal(ending.rbegin(), ending.rend(), str.rbegin());
     }
 
-    bool endsWith(const std::string &str, char ending)
-    {
-        return ( (str.length() > 0) && (str.back() == ending));
+    bool endsWith(const std::string &str, char ending) {
+        return ( (!str.empty()) && (str.back() == ending));
     }
 
-void installSignalHandlers(void (*signalHandler)(int))
-{
+    bool startsWith(const std::string &str, const std::string &start) {
+        return (str.length() < start.length()) ? false : std::equal(start.begin(), start.end(), str.begin());
+    }
+
+    bool startsWith(const std::string &str, char start) {
+        return ( (!str.empty()) && (str.front() == start));
+    }
+
+void installSignalHandlers(void (*signalHandler)(int)) {
     static struct sigaction signalInterruptHandler;
     signalInterruptHandler.sa_handler = signalHandler;
     sigemptyset(&signalInterruptHandler.sa_mask);
@@ -94,25 +90,37 @@ void installSignalHandlers(void (*signalHandler)(int))
     sigaction(SIGTTOU, &signalInterruptHandler, NULL);
 }
 
-std::vector<std::string> split(std::string str, const std::string &delimiter)
-{
-    std::vector<std::string> returnContainer;
-    auto splitPosition = str.find(delimiter);
-    if (splitPosition == std::string::npos) {
-        returnContainer.push_back(str);
-        return returnContainer;
+int split(std::vector<std::string> &output, const std::string &str, char delimiter) {
+    int returnSize{0};
+    std::stringstream istr{str};
+    std::string tempString{""};
+    while (std::getline(istr, tempString, delimiter)) {
+        output.push_back(tempString);
+        returnSize++;
     }
-    while (splitPosition != std::string::npos) {
-        returnContainer.push_back(str.substr(0, splitPosition));
-        str = str.substr(splitPosition + delimiter.size());
-        splitPosition = str.find(delimiter);
-    }
-    return returnContainer;
+    return returnSize;
 }
 
 
-std::string TStringFormat(const char *formatting)
-{
+int split(std::vector<std::string> &output, const std::string &inputString, const std::string &delimiter)  {
+    std::string str{inputString};
+    int returnSize{0};
+    auto splitPosition = str.find(delimiter);
+    if (splitPosition == std::string::npos) {
+        output.push_back(str);
+        return ++returnSize;
+    }
+    while (splitPosition != std::string::npos) {
+        output.push_back(str.substr(0, splitPosition));
+        str = str.substr(splitPosition + delimiter.size());
+        splitPosition = str.find(delimiter);
+        returnSize++;
+    }
+    return returnSize;
+}
+
+
+std::string TStringFormat(const char *formatting) {
     return std::string{formatting};
 }
 
@@ -129,14 +137,36 @@ std::string currentDate() {
     return dynamic_cast<std::ostringstream &>(std::ostringstream{} << std::put_time(&tm, "%d-%m-%Y")).str();
 }
 
-int removeFile(const std::string &filePath)
-{
+
+bool fileExists(const std::string &filePath) {
+    return ( stat(filePath.c_str(), F_OK) != -1 );
+}
+
+bool directoryExists(const std::string &directoryPath) {
+    struct stat directoryCheck{};
+    return ( (stat(directoryPath.c_str(), &directoryCheck) == 0) && (S_ISDIR(directoryCheck.st_mode)) );
+}
+
+std::string getCurrentDirectory() {
+    char buffer[PATH_MAX];
+    memset(buffer, '\0', PATH_MAX);
+    auto result = getcwd(buffer, PATH_MAX);
+    if (result == nullptr) {
+        std::stringstream message{};
+        message << "ERROR: getcwd() returned a nullptr (was a drive removed?)";
+        throw std::runtime_error(message.str());
+    }
+    return std::string{buffer};
+}
+
+int removeFile(const std::string &filePath) {
     return std::remove(filePath.c_str());
 }
 
-int createDirectory(const std::string &filePath, mode_t permissions)
-{
+int createDirectory(const std::string &filePath, mode_t permissions) {
     return mkdir(filePath.c_str(), permissions);
 }
+
+
 
 } //namespace ApplicationUtilities
